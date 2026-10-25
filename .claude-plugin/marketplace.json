@@ -1,0 +1,11 @@
+{
+  "name": "prioa-preset",
+  "owner": { "name": "prioa" },
+  "plugins": [
+    {
+      "name": "infobar",
+      "source": "./mods/infobar",
+      "description": "Infozeile unter dem Prompt: Context, Limits mit Prognose, Account + Plan, Host, Git, MCP; /info-Pane mit Account-Wechsel"
+    }
+  ]
+}

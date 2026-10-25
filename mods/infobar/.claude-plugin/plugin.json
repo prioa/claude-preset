@@ -1,0 +1,38 @@
+{
+  "name": "infobar",
+  "version": "0.1.0",
+  "description": "Infozeile unter dem Prompt: Modell, Context, Limits mit Prognose, Kosten, Account + Plan, Host, Pfad, Git, MCP; /info-Pane mit Account-Wechsel",
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "fields": {
+      "type": "string",
+      "title": "Felder",
+      "description": "Komma-separiert, in dieser Reihenfolge: model,ctx,5h,7d,cost,mode,effort,account,host,mcp,git,session",
+      "default": "model,ctx,5h,7d,cost,mode,effort,account,host,mcp,git,session"
+    },
+    "bars": {
+      "type": "boolean",
+      "title": "Mini-Balken",
+      "description": "▰▰▱▱▱ vor Context und Limits",
+      "default": true
+    },
+    "twoLines": {
+      "type": "boolean",
+      "title": "Zwei Zeilen",
+      "description": "Zeile 1: Modell, Context, Limits, Kosten, Mode, Effort; Zeile 2: Account, Host, MCP, Git, Session",
+      "default": true
+    },
+    "compactBelow": {
+      "type": "number",
+      "title": "Kompakt unter Spalten",
+      "description": "Schmaler als das: nur Context, 5h und Host",
+      "default": 120
+    },
+    "hostProfiles": {
+      "type": "string",
+      "title": "Host-Profile (JSON)",
+      "description": "{\"prod-*\": {\"emoji\": \"🔴\", \"label\": \"PROD\"}}",
+      "default": ""
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "marketplaces": [
+    "anthropics/claude-plugins-official",
+    "nextlevelbuilder/ui-ux-pro-max-skill",
+    "athola/claude-night-market"
+  ],
+  "plugins": [
+    "clangd-lsp@claude-plugins-official",
+    "ui-ux-pro-max@ui-ux-pro-max-skill",
+    "cc-plugin-you-should-know@builtin",
+    "pensive@claude-night-market"
+  ]
+}
