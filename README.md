@@ -25,7 +25,7 @@ Voraussetzungen: `git`, `jq`, `claude`.
 
 1. **settings.json mergen:** bestehende `~/.claude/settings.json` + `settings/base.json` + `settings/<darwin|linux>.json`. Werte aus dem Preset gewinnen, lokale Zusatz-Keys bleiben erhalten. Vor jeder Änderung landet ein Backup in `~/.claude/backups/`.
 2. **Statusline:** keine mehr. Eine alte `statusLine` des Presets oder von cmux-claude-usage wird entfernt, eine fremde bleibt. Die Infos zeigt der Mod `infobar`.
-3. **Plugins:** alle Marketplaces und Plugins aus `plugins.json`.
+3. **Plugins:** alle Marketplaces und Plugins aus `plugins.json`; eingebaute (`@builtin`) werden nur aktiviert.
 4. **Mods:** dieses Repo ist zugleich der Marketplace `prioa-preset`; jeder Mod liegt unter `mods/<name>/` und wird in `.claude-plugin/marketplace.json` eingetragen.
 
 `SKIP_PLUGINS=1 ./install.sh` mergt nur die settings. `./uninstall.sh` spielt das letzte settings-Backup zurück.

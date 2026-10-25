@@ -77,9 +77,14 @@ done < <(jq -r '.marketplaces[]' "$PRESET_DIR/plugins.json")
 claude plugin marketplace update >/dev/null 2>&1 || warn "marketplace update fehlgeschlagen"
 
 failed=()
+# Eingebaute Plugins (`@builtin`) gibt es in keinem Marketplace — sie werden nur aktiviert.
 install_plugin() {
   log "Plugin $1"
-  claude plugin install "$1" --scope user </dev/null || failed+=("$1")
+  if [[ "$1" == *@builtin ]]; then
+    claude plugin enable "$1" --scope user </dev/null || failed+=("$1")
+  else
+    claude plugin install "$1" --scope user </dev/null || failed+=("$1")
+  fi
 }
 
 while IFS= read -r plugin; do
