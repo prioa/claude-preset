@@ -2,12 +2,15 @@
   "marketplaces": [
     "anthropics/claude-plugins-official",
     "nextlevelbuilder/ui-ux-pro-max-skill",
-    "athola/claude-night-market"
+    "athola/claude-night-market",
+    "OneWave-AI/claude-code-mods"
   ],
   "plugins": [
     "clangd-lsp@claude-plugins-official",
     "ui-ux-pro-max@ui-ux-pro-max-skill",
     "cc-plugin-you-should-know@builtin",
-    "pensive@claude-night-market"
+    "pensive@claude-night-market",
+    "security-guidance@claude-plugins-official",
+    "launch-codes@claude-code-mods"
   ]
 }
