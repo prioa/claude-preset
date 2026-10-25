@@ -110,4 +110,9 @@ if ((${#failed[@]})); then
   warn "Fehlgeschlagen: ${failed[*]}"
   exit 1
 fi
-log "Fertig. Neue Claude-Session starten, damit alles geladen wird."
+# Ein Skript kann keinen Slash-Befehl ausloesen; laufende Sessions laden mit /reload-plugins nach.
+if [[ "${CLAUDECODE:-}" == 1 ]]; then
+  log "Fertig. In dieser Session /reload-plugins ausfuehren (in anderen offenen Sessions ebenso)."
+else
+  log "Fertig. Laufende Claude-Sessions: /reload-plugins ausfuehren; neue Sessions laden alles automatisch."
+fi
