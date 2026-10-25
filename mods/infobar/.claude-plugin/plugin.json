@@ -25,7 +25,7 @@
     "compactBelow": {
       "type": "number",
       "title": "Kompakt unter Spalten",
-      "description": "Schmaler als das: nur Context, 5h und Host",
+      "description": "Schmaler als das: nur Context, 5h, 7d, Host und Git, ohne Balken",
       "default": 120
     },
     "hostProfiles": {

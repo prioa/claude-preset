@@ -266,7 +266,7 @@ export const register: Register = (on, options) => {
   on('classic.Stop', ($, e, next) => (void noteTurn($, e).catch(() => undefined), next(e)))
 
   // Our rows sit on the hint line under the prompt, the engine's line kept
-  // beneath them; below `compactBelow` columns only context, 5h and host.
+  // beneath them; below `compactBelow` columns only limits, host and git.
   on('ui.render', { component: 'PromptHint' }, async ($, e, next) => {
     const columns = e.viewport?.columns
     if (columns !== undefined && columns !== settings.columns) {

@@ -55,7 +55,7 @@ export const ALL_FIELDS = [
   'git',
   'session',
 ] as const
-export const COMPACT_FIELDS = ['ctx', '5h', 'host'] as const
+export const COMPACT_FIELDS = ['ctx', '5h', '7d', 'host', 'git'] as const
 
 const WEEKDAYS = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa']
 const BURN_WINDOW_MS = 30 * 60_000
@@ -294,7 +294,7 @@ export function formatLine(snap: Snapshot, settings: LineSettings): string {
       .filter((t): t is string => Boolean(t))
       .join(' · ')
 
-  if (compact || !settings.twoLines) return join(fields)
+  if (!settings.twoLines) return join(fields)
 
   return [join(fields.filter(f => !SECOND_LINE.has(f))), join(fields.filter(f => SECOND_LINE.has(f)))]
     .filter(Boolean)

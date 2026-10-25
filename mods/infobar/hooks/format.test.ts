@@ -49,9 +49,12 @@ describe('formatLine', () => {
     expect(formatLine(hot, { ...wide, bars: true, fields: ['ctx', '5h'] })).toBe('‼🧠 ▰▰▰▰▰ 91% · ⚠5h ▰▰▰▰▱ 75%')
   })
 
-  test('narrow terminals keep only context, 5h and host, without bars', () => {
+  test('narrow terminals keep only limits, host and git, without bars', () => {
     expect(formatLine(base, { ...wide, bars: true, columns: 80 })).toBe(
-      '🧠 42% 420k/1M · 5h 13% ↺2h14m · 🖥 ssh:server1 ~/app',
+      '🧠 42% 420k/1M · 5h 13% ↺2h14m · 7d 38% · 🖥 ssh:server1 ~/app · ⎇ main* ↑3↓1',
+    )
+    expect(formatLine(base, { ...wide, twoLines: true, columns: 80 })).toBe(
+      '🧠 42% 420k/1M · 5h 13% ↺2h14m · 7d 38%\n🖥 ssh:server1 ~/app · ⎇ main* ↑3↓1',
     )
   })
 
