@@ -11,6 +11,10 @@
     "cc-plugin-you-should-know@builtin",
     "pensive@claude-night-market",
     "security-guidance@claude-plugins-official",
-    "launch-codes@claude-code-mods"
+    "launch-codes@claude-code-mods",
+    "grafana-mcp@claude-plugins-official",
+    "chrome-devtools-mcp@claude-plugins-official",
+    "php-lsp@claude-plugins-official",
+    "typescript-lsp@claude-plugins-official"
   ]
 }

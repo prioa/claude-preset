@@ -1,11 +1,23 @@
 {
   "name": "prioa-preset",
-  "owner": { "name": "prioa" },
+  "owner": {
+    "name": "prioa"
+  },
   "plugins": [
     {
       "name": "infobar",
       "source": "./mods/infobar",
       "description": "Infozeile unter dem Prompt: Context, Limits mit Prognose, Account + Plan, Host, Git, MCP; /info-Pane mit Account-Wechsel"
+    },
+    {
+      "name": "agent-library",
+      "source": "./mods/agent-library",
+      "description": "Spezialisten-Agenten (WordPress, WP-Performance, React/Vite, Grafana, ESP32), nur bei Bedarf geladen"
+    },
+    {
+      "name": "wp-skills",
+      "source": "./mods/wp-skills",
+      "description": "WordPress Agent Skills (WordPress/agent-skills), fest gepinnt vendored"
     }
   ]
 }

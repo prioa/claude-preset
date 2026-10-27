@@ -39,7 +39,17 @@ Requirements: `git`, `jq`, `claude`.
 | `cc-plugin-you-should-know@builtin` | Side agent that shows important things above the prompt during longer tasks |
 | `pensive@claude-night-market` | Code review incl. the `blast-radius-reviewer` agent (pulls in `leyline` as a dependency) |
 | `security-guidance@claude-plugins-official` | Checks Claude's changes for injection, XSS, secrets and similar |
+| `grafana-mcp@claude-plugins-official` | Grafana MCP (self-hosted): dashboards, data sources, queries, alerting. Runs `grafana/mcp-grafana` in Docker |
+| `chrome-devtools-mcp@claude-plugins-official` | Live Chrome: performance traces, network, console (WP performance, React debugging) |
+| `php-lsp@claude-plugins-official` | PHP LSP (Intelephense) |
+| `typescript-lsp@claude-plugins-official` | TypeScript/JavaScript LSP |
 | `launch-codes@claude-code-mods` | Risky Bash commands (`rm -rf`, force push, `reset --hard`, SQL `DROP`, `curl \| sh` …) need a one-time code + LAUNCH; without input (e.g. `claude -p`) they are blocked. `/launch-codes test <cmd>` checks without running |
+
+External programs (install.sh only warns if they are missing): `docker` (grafana-mcp), `intelephense` (`npm i -g intelephense`), `typescript-language-server` (`npm i -g typescript-language-server typescript`), `pio` (`pipx install platformio`).
+
+**Grafana setup:** in Grafana create a service account (role Viewer, or Editor if Claude should change dashboards) and a token for it. Then set URL and token once per machine: `/plugin configure grafana-mcp@claude-plugins-official` in Claude Code (or `claude plugin install … --config KEY=VALUE`).
+
+The night-market star prompt (SessionStart hook of `leyline`) is turned off via `env.CLAUDE_NIGHT_MARKET_NO_STAR_PROMPT` in `settings/base.json`.
 
 New plugin: add it to `plugins.json` (for a third-party marketplace also its `owner/repo`), then run `./install.sh`.
 
@@ -63,6 +73,24 @@ Opus 5.5 1M · 🧠 ▰▰▱▱▱ 42% 420k/1M · 5h ▰▱▱▱▱ 13% ↺2h1
 - With cmux-claude-usage installed, the mod feeds its tab-bar gauges.
 
 Tests: `claude plugin test mods/infobar`
+
+### agent-library
+
+Specialist agents for WordPress dev, WordPress performance, React/Vite, Grafana and ESP32/PlatformIO. They are **not** registered as subagents: only the skill description sits in the context. Claude loads the skill when a task in one of these areas comes up, decides whether delegating is worth it (parallel subtasks, an audit that would flood the context, a long autonomous run), and otherwise uses the definition as a checklist inline. To delegate, it reads `agents/<name>.md` and starts a `general-purpose` agent with it.
+
+New agent: add `mods/agent-library/skills/agent-library/agents/<name>.md` and a row to the index in `SKILL.md`.
+
+Written for this preset; [VoltAgent/awesome-claude-code-subagents](https://github.com/VoltAgent/awesome-claude-code-subagents) and [wshobson/agents](https://github.com/wshobson/agents) (both MIT) served as references.
+
+### wp-skills
+
+The official [WordPress/agent-skills](https://github.com/WordPress/agent-skills) (GPL-2.0-or-later), vendored at a fixed commit (see `mods/wp-skills/VENDOR.md`): `wp-performance`, `wp-plugin-development`, `wp-block-development`, `wp-rest-api`, `wp-wpcli-and-ops`, `wp-phpstan` and more.
+
+Third-party prompts are pinned on purpose, so an upstream change cannot slip prompt injection into every machine. Update:
+
+```bash
+scripts/vendor-wp-skills.sh <commit-sha>   # fetch, then review git diff
+```
 
 ### Adding a mod
 

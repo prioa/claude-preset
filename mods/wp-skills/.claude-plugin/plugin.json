@@ -1,0 +1,9 @@
+{
+  "name": "wp-skills",
+  "description": "WordPress Agent Skills (WordPress/agent-skills), fest gepinnt im Preset vendored",
+  "author": {
+    "name": "WordPress Contributors"
+  },
+  "license": "GPL-2.0-or-later",
+  "version": "0.1.0"
+}

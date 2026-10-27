@@ -6,5 +6,8 @@
   "skipAutoPermissionPrompt": true,
   "theme": "dark",
   "switchModelsOnFlag": true,
-  "agentPushNotifEnabled": true
+  "agentPushNotifEnabled": true,
+  "env": {
+    "CLAUDE_NIGHT_MARKET_NO_STAR_PROMPT": "1"
+  }
 }

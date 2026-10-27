@@ -106,6 +106,15 @@ if ((${#mods[@]})); then
   done
 fi
 
+# Einige Plugins brauchen externe Programme; nur Hinweise, nichts wird installiert.
+check_bin() {
+  command -v "$1" >/dev/null || warn "$1 fehlt (fuer $2): $3"
+}
+check_bin docker grafana-mcp "Docker/OrbStack installieren"
+check_bin intelephense php-lsp "npm i -g intelephense"
+check_bin typescript-language-server typescript-lsp "npm i -g typescript-language-server typescript"
+check_bin pio "ESP32-Builds" "pipx install platformio"
+
 if ((${#failed[@]})); then
   warn "Fehlgeschlagen: ${failed[*]}"
   exit 1
