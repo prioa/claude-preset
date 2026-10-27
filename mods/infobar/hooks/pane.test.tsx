@@ -18,7 +18,6 @@ const USAGE = {
   startedAt: 0,
   context: { percent: 42, tokens: 420_000, window: 1_000_000 },
   rateLimits: [{ kind: 'five_hour', percentUsed: 13 }],
-  cost: { usd: 1.5 },
 }
 
 test('the pane shows the figures and switches account', async ($, on) => {
@@ -40,7 +39,7 @@ test('the pane shows the figures and switches account', async ($, on) => {
 
     expect((await ui.find({ type: 'Text', text: /^Context/ }))?.text).toMatch(/42% · 420k \/ 1M/)
     expect((await ui.find({ type: 'Text', text: /^5h/ }))?.text).toMatch(/13%/)
-    expect((await ui.find({ type: 'Text', text: /^Kosten/ }))?.text).toBe('Kosten $1.50 · 4 Prompts')
+    expect((await ui.find({ type: 'Text', text: /^Session/ }))?.text).toBe('Session 0m · 4 Prompts')
 
     await ui.press({ key: 'login' })
     expect(ran).toEqual(['login'])

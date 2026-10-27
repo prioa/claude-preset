@@ -8,7 +8,8 @@ import {
   burnOut,
   clock,
   countdown,
-  formatLine,
+  duration,
+  formatRows,
   matchProfile,
   parseFields,
   parseGitStatus,
@@ -22,6 +23,8 @@ import {
   weekday,
   type Git,
   type Host,
+  type Seg,
+  type Tone,
   type LineSettings,
   type Snapshot,
 } from './format'
@@ -41,10 +44,10 @@ const warned = atom({ plugin: 'infobar', key: 'warned' } as const, [] as string[
   shape: 'warned-1',
 })
 
-type Usage = { context?: SessionContextUsage; rateLimits: readonly SessionRateLimit[]; costUsd?: number }
+type Usage = { context?: SessionContextUsage; rateLimits: readonly SessionRateLimit[] }
 
 // Module state starts over on a reload; register and session.start refill it.
-let settings: LineSettings = { fields: parseFields(undefined), bars: true, twoLines: true, compactBelow: 120 }
+let settings: LineSettings = { fields: parseFields(undefined), bars: false, twoLines: true, compactBelow: 120 }
 let profiles: ReturnType<typeof parseProfiles> = {}
 let home: string | undefined
 let host: Host | undefined
@@ -119,7 +122,6 @@ async function snapshot($: EngineInterface): Promise<Snapshot> {
     model,
     context: usage.context,
     limits: usage.rateLimits,
-    costUsd: usage.costUsd,
     startedAt,
     turns: await $.session.turns(),
     mode,
@@ -136,11 +138,20 @@ async function snapshot($: EngineInterface): Promise<Snapshot> {
 }
 
 // The rows drawn under the prompt, above the engine's hint line.
-let rows: string[] = []
+let rows: Seg[][] = []
+
+// Theme keys, so the colors follow the person's theme.
+const TONE_PROPS: Record<Tone, { color?: string; dimColor?: boolean; bold?: boolean }> = {
+  dim: { dimColor: true },
+  ok: { color: 'success' },
+  warn: { color: 'warning' },
+  bad: { color: 'error' },
+  strong: { bold: true },
+}
 
 function show($: EngineInterface, snap: Snapshot) {
-  const next = formatLine(snap, settings).split('\n').filter(Boolean)
-  if (next.join('\n') === rows.join('\n')) return
+  const next = formatRows(snap, settings)
+  if (JSON.stringify(next) === JSON.stringify(rows)) return
   rows = next
   $.ui.invalidate('ui.render')
 }
@@ -149,7 +160,7 @@ async function paint($: EngineInterface) {
   show($, await snapshot($))
 }
 
-// Between turns nothing is measured: the countdown, the duration and $/h move
+// Between turns nothing is measured: the countdown and the duration move
 // on the clock alone, and git changes come from other terminals.
 async function tick($: EngineInterface) {
   ticks += 1
@@ -157,8 +168,8 @@ async function tick($: EngineInterface) {
   await paint($)
 }
 
-function takeUsage(u: { context: SessionContextUsage; rateLimits: SessionRateLimit[]; cost?: { usd: number } }) {
-  usage = { context: u.context, rateLimits: u.rateLimits, costUsd: u.cost?.usd }
+function takeUsage(u: { context: SessionContextUsage; rateLimits: SessionRateLimit[] }) {
+  usage = { context: u.context, rateLimits: u.rateLimits }
 }
 
 async function warn($: EngineInterface, snap: Snapshot) {
@@ -217,7 +228,7 @@ async function noteTurn($: EngineInterface, e: { permission_mode?: string; effor
 export const register: Register = (on, options) => {
   settings = {
     fields: parseFields(typeof options.fields === 'string' ? options.fields : undefined),
-    bars: options.bars !== false,
+    bars: options.bars === true,
     twoLines: options.twoLines !== false,
     compactBelow: typeof options.compactBelow === 'number' ? options.compactBelow : 120,
   }
@@ -281,7 +292,9 @@ export const register: Register = (on, options) => {
     return (
       <Box flexDirection="column">
         {rows.map(row => (
-          <Text wrap="truncate-end">{row}</Text>
+          <Text wrap="truncate-end">
+            {row.map(seg => (seg.tone ? <Text {...TONE_PROPS[seg.tone]}>{seg.text}</Text> : seg.text))}
+          </Text>
         ))}
         {own}
       </Box>
@@ -342,7 +355,10 @@ export const register: Register = (on, options) => {
     }
     const width = e.props.bodyColumns ?? 60
     const full = await $.session.usage({ breakdown: 'summary', columns: width }).catch(() => undefined)
-    if (full) takeUsage(full)
+    if (full) {
+      takeUsage(full)
+      startedAt = full.startedAt
+    }
     const snap = await snapshot($)
     const categories = (full?.context.breakdown?.categories ?? [])
       // Free space and the autocompact reserve are not usage.
@@ -394,7 +410,7 @@ export const register: Register = (on, options) => {
         {limitRow('five_hour', '5h')}
         {limitRow('seven_day', '7d')}
         <Text>
-          Kosten {snap.costUsd !== undefined ? `$${snap.costUsd.toFixed(2)}` : '–'}
+          Session {snap.startedAt !== undefined ? duration(snap.now - snap.startedAt) : '–'}
           {snap.turns !== undefined ? ` · ${snap.turns} Prompts` : ''}
         </Text>
         <Text> </Text>

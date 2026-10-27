@@ -57,16 +57,16 @@ New plugin: add it to `plugins.json` (for a third-party marketplace also its `ow
 Draws two lines below the prompt, above Claude Code's hint line (replaces the statusLine):
 
 ```
-Opus 5.5 1M · 🧠 ▰▰▱▱▱ 42% 420k/1M · 5h ▰▱▱▱▱ 13% ↺2h14m → leer ~20:40 · 7d ▰▰▱▱▱ 38% ↺Mo · $1.84 · auto · high
-👤 abc…@example Max 5× · 🖥 ssh:server1 ~/app · 🔌 3 · ⎇ main* ↑3↓1 · ⏱ 1h12 14× $1.53/h
+Opus 5.5 1M │ ctx 42% 420k/1M │ 5h 13% ↺2h14 → 20:40 │ 7d 38% ↺Mo │ auto · high
+abc…@example Max 5× │ ssh:server1 ~/app │ mcp 3 │ ⎇ main* ↑3↓1 │ 1h12 · 14 turns
 ```
 
-- ⚠ from 70 %, ‼ from 90 %. Toast at context ≥ 85 % and limit ≥ 90 %, system message when an exhausted limit is free again.
-- `→ leer ~HH:MM` (German for "empty"): projection from the last 30 min; `✓` if the current pace lasts until the reset.
-- Narrower than 120 columns: line 1 only context, 5h and 7d, line 2 only host and git, without bars.
-- Refresh: after every turn and whenever a limit moves by one point; plus every 30 s (countdown, duration, $/h) and every 2 min for git.
+- Labels and secondary values dim; percentages green below 50 %, yellow from 50 %, red from 90 % (theme colors). Toast at context ≥ 85 % and limit ≥ 90 %, system message when an exhausted limit is free again.
+- `→ HH:MM` (red): when the 5h limit runs out at the pace of the last 30 min, before its reset; `✓` if the pace lasts until the reset.
+- Narrower than 120 columns: line 1 only context, 5h and 7d, line 2 only host and git.
+- Refresh: after every turn and whenever a limit moves by one point; plus every 30 s (countdown, duration) and every 2 min for git.
 - `/info` opens a pane with details (context by category, limits, host, git, MCP) and account switching (`/login`, `/logout`); `/account` opens it focused. Keys: `r` refresh, `x`/Esc close (`l`/`o` = login/logout where no dropdown is drawn).
-- Settings in the `/config` menu: `fields` (order), `bars`, `compactBelow`, `hostProfiles` (e.g. `{"prod-*": {"emoji": "🔴", "label": "PROD"}}`).
+- Settings in the `/config` menu: `fields` (order), `bars` (colored bars, off by default), `compactBelow`, `hostProfiles` (e.g. `{"prod-*": {"emoji": "🔴", "label": "PROD"}}`).
 - With cmux-claude-usage installed, the mod feeds its tab-bar gauges.
 
 Tests: `claude plugin test mods/infobar`

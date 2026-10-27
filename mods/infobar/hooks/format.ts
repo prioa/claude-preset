@@ -18,7 +18,6 @@ export type Snapshot = {
   model?: string
   context?: { percent?: number; tokens?: number; window: number }
   limits: readonly Limit[]
-  costUsd?: number
   startedAt?: number
   turns?: number
   mode?: string
@@ -41,12 +40,16 @@ export type LineSettings = {
   columns?: number
 }
 
+// How a run of the line is drawn: `dim` for labels and secondary values,
+// `ok`/`warn`/`bad` for load, `strong` bold; absent, plain text.
+export type Tone = 'dim' | 'ok' | 'warn' | 'bad' | 'strong'
+export type Seg = { text: string; tone?: Tone }
+
 export const ALL_FIELDS = [
   'model',
   'ctx',
   '5h',
   '7d',
-  'cost',
   'mode',
   'effort',
   'account',
@@ -74,11 +77,11 @@ export function parseFields(raw: string | undefined): string[] {
   return picked.length ? picked : [...ALL_FIELDS]
 }
 
-export function marker(pct: number): string {
-  if (pct >= 90) return '‼'
-  if (pct >= 70) return '⚠'
+export function loadTone(pct: number): Tone {
+  if (pct >= 90) return 'bad'
+  if (pct >= 50) return 'warn'
 
-  return ''
+  return 'ok'
 }
 
 export function bar(pct: number, segments = 5): string {
@@ -98,7 +101,7 @@ export function countdown(resetMs: number, now: number): string {
   const mins = Math.max(0, Math.round((resetMs - now) / 60_000))
   const h = Math.floor(mins / 60)
 
-  return h ? `${h}h${String(mins % 60).padStart(2, '0')}m` : `${mins}m`
+  return h ? `${h}h${String(mins % 60).padStart(2, '0')}` : `${mins}m`
 }
 
 export function clock(ms: number): string {
@@ -192,86 +195,97 @@ function limit(snap: Snapshot, kind: string): Limit | undefined {
   return snap.limits.find(l => l.kind === kind)
 }
 
-function pctPart(label: string, pct: number, bars: boolean): string {
-  const shown = Math.round(pct)
+const dim = (text: string): Seg => ({ text, tone: 'dim' })
 
-  return `${marker(pct)}${label} ${bars ? bar(pct) + ' ' : ''}${shown}%`
+function pctSegs(label: string, pct: number, bars: boolean): Seg[] {
+  const tone = loadTone(pct)
+  const segs: Seg[] = [dim(label + ' ')]
+  if (bars) segs.push({ text: bar(pct) + ' ', tone })
+  segs.push({ text: `${Math.round(pct)}%`, tone })
+
+  return segs
 }
 
-function fieldText(field: string, snap: Snapshot, bars: boolean): string | undefined {
+function fieldSegs(field: string, snap: Snapshot, bars: boolean): Seg[] | undefined {
   switch (field) {
     case 'model':
-      return snap.model
+      return snap.model ? [{ text: snap.model, tone: 'strong' }] : undefined
     case 'ctx': {
       const c = snap.context
       if (c?.percent === undefined) return undefined
-      const size = c.tokens !== undefined ? ` ${tokens(c.tokens)}/${tokens(c.window)}` : ''
+      const segs = pctSegs('ctx', c.percent, bars)
+      if (c.tokens !== undefined) segs.push(dim(` ${tokens(c.tokens)}/${tokens(c.window)}`))
 
-      return pctPart('🧠', c.percent, bars) + size
+      return segs
     }
     case '5h': {
       const l = limit(snap, 'five_hour')
       if (!l) return undefined
-      let text = pctPart('5h', l.percentUsed, bars)
+      const segs = pctSegs('5h', l.percentUsed, bars)
       const reset = l.resetsAt ? Date.parse(l.resetsAt) : NaN
-      if (!Number.isNaN(reset)) text += ` ↺${countdown(reset, snap.now)}`
+      if (!Number.isNaN(reset)) segs.push(dim(` ↺${countdown(reset, snap.now)}`))
       const out = burnOut(snap.samples, snap.now)
       if (out !== undefined) {
-        text += !Number.isNaN(reset) && reset <= out ? ' ✓' : ` → leer ~${clock(out)}`
+        // Empty before the reset at this pace: the time it runs out, in red.
+        segs.push(!Number.isNaN(reset) && reset <= out ? { text: ' ✓', tone: 'ok' } : { text: ` → ${clock(out)}`, tone: 'bad' })
       }
 
-      return text
+      return segs
     }
     case '7d': {
       const l = limit(snap, 'seven_day')
       if (!l) return undefined
+      const segs = pctSegs('7d', l.percentUsed, bars)
       const reset = l.resetsAt ? Date.parse(l.resetsAt) : NaN
+      if (!Number.isNaN(reset)) segs.push(dim(` ↺${weekday(reset)}`))
 
-      return pctPart('7d', l.percentUsed, bars) + (Number.isNaN(reset) ? '' : ` ↺${weekday(reset)}`)
+      return segs
     }
-    case 'cost':
-      return snap.costUsd === undefined ? undefined : `$${snap.costUsd.toFixed(2)}`
     case 'mode':
-      return snap.mode
+      return snap.mode ? [{ text: snap.mode }] : undefined
     case 'effort':
-      return snap.effort
+      return snap.effort ? [{ text: snap.effort }] : undefined
     case 'account': {
-      if (!snap.email && !snap.plan) return undefined
+      const segs: Seg[] = []
+      if (snap.email) segs.push({ text: shortEmail(snap.email) })
+      if (snap.plan) segs.push(dim((segs.length ? ' ' : '') + snap.plan))
 
-      return ['👤', snap.email && shortEmail(snap.email), snap.plan].filter(Boolean).join(' ')
+      return segs.length ? segs : undefined
     }
     case 'host': {
       if (!snap.host && !snap.cwd) return undefined
       const p = snap.profile
-      const name = snap.host
-        ? p?.label
-          ? `${p.emoji ?? '🖥'} ${p.label}`
-          : `🖥 ${snap.host.isSsh ? 'ssh:' : ''}${snap.host.name}`
-        : ''
-      const alarm = p?.label?.toUpperCase().includes('PROD') ? '‼' : ''
+      const segs: Seg[] = []
+      if (p?.label) {
+        const isProd = p.label.toUpperCase().includes('PROD')
+        segs.push({ text: (p.emoji ? p.emoji + ' ' : '') + p.label, tone: isProd ? 'bad' : 'strong' })
+      } else if (snap.host) {
+        // A remote host stays at full strength so it is not mistaken for the local one.
+        segs.push(snap.host.isSsh ? { text: `ssh:${snap.host.name}` } : dim(snap.host.name))
+      }
+      if (snap.cwd) segs.push({ text: (segs.length ? ' ' : '') + snap.cwd })
 
-      return alarm + [name, snap.cwd].filter(Boolean).join(' ')
+      return segs
     }
     case 'mcp':
-      return snap.mcp?.length ? `🔌 ${snap.mcp.length}` : undefined
+      return snap.mcp?.length ? [dim('mcp '), { text: `${snap.mcp.length}` }] : undefined
     case 'git': {
       const g = snap.git
       if (!g) return undefined
+      const segs: Seg[] = [dim('⎇ '), { text: g.branch }]
+      if (g.isDirty) segs.push({ text: '*', tone: 'warn' })
       const ab = (g.ahead ? `↑${g.ahead}` : '') + (g.behind ? `↓${g.behind}` : '')
-      const wt = g.worktree ? ` [${g.worktree}]` : ''
+      if (ab) segs.push(dim(' ' + ab))
+      if (g.worktree) segs.push(dim(` [${g.worktree}]`))
 
-      return `⎇ ${g.branch}${g.isDirty ? '*' : ''}${ab ? ' ' + ab : ''}${wt}`
+      return segs
     }
     case 'session': {
       if (snap.startedAt === undefined) return undefined
-      const ms = snap.now - snap.startedAt
-      const parts = [`⏱ ${duration(ms)}`]
-      if (snap.turns !== undefined) parts.push(`${snap.turns}×`)
-      if (snap.costUsd !== undefined && ms >= 10 * 60_000) {
-        parts.push(`$${(snap.costUsd / (ms / 3_600_000)).toFixed(2)}/h`)
-      }
+      const segs: Seg[] = [{ text: duration(snap.now - snap.startedAt) }]
+      if (snap.turns !== undefined) segs.push(dim(` · ${snap.turns} turns`))
 
-      return parts.join(' ')
+      return segs
     }
     default:
       return undefined
@@ -282,22 +296,39 @@ export function isCompact(settings: LineSettings): boolean {
   return settings.columns !== undefined && settings.columns < settings.compactBelow
 }
 
-export function formatLine(snap: Snapshot, settings: LineSettings): string {
+/** The rows of the info line as styled runs, one array per row. */
+export function formatRows(snap: Snapshot, settings: LineSettings): Seg[][] {
   const compact = isCompact(settings)
   const fields = compact
     ? settings.fields.filter(f => (COMPACT_FIELDS as readonly string[]).includes(f))
     : settings.fields
   const bars = settings.bars && !compact
-  const join = (list: readonly string[]) =>
-    list
-      .map(f => fieldText(f, snap, bars))
-      .filter((t): t is string => Boolean(t))
-      .join(' · ')
+  const row = (list: readonly string[]) => {
+    const segs: Seg[] = []
+    let prev: string | undefined
+    for (const f of list) {
+      const part = fieldSegs(f, snap, bars)
+      if (!part?.length) continue
+      // Mode and effort read as one setting: a lighter separator between them.
+      if (prev) segs.push(dim(prev === 'mode' && f === 'effort' ? ' · ' : ' │ '))
+      segs.push(...part)
+      prev = f
+    }
 
-  if (!settings.twoLines) return join(fields)
+    return segs
+  }
 
-  return [join(fields.filter(f => !SECOND_LINE.has(f))), join(fields.filter(f => SECOND_LINE.has(f)))]
-    .filter(Boolean)
+  const rows = settings.twoLines
+    ? [row(fields.filter(f => !SECOND_LINE.has(f))), row(fields.filter(f => SECOND_LINE.has(f)))]
+    : [row(fields)]
+
+  return rows.filter(r => r.length)
+}
+
+/** The info line as plain text, rows joined by newlines. */
+export function formatLine(snap: Snapshot, settings: LineSettings): string {
+  return formatRows(snap, settings)
+    .map(r => r.map(seg => seg.text).join(''))
     .join('\n')
 }
 

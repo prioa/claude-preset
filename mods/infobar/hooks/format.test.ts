@@ -5,6 +5,8 @@ import {
   bar,
   burnOut,
   formatLine,
+  formatRows,
+  loadTone,
   matchProfile,
   parseFields,
   parseGitStatus,
@@ -27,7 +29,6 @@ const base: Snapshot = {
     { kind: 'five_hour', percentUsed: 13, resetsAt: new Date(NOW + 134 * MIN).toISOString() },
     { kind: 'seven_day', percentUsed: 38 },
   ],
-  costUsd: 1.84,
   email: 'someone@example.com',
   plan: 'Max 5×',
   host: { name: 'server1', isSsh: true },
@@ -40,27 +41,40 @@ const wide = { fields: parseFields(undefined), bars: false, twoLines: false, com
 describe('formatLine', () => {
   test('draws every field that has a value, in order', () => {
     expect(formatLine(base, wide)).toBe(
-      'Opus 5.5 1M · 🧠 42% 420k/1M · 5h 13% ↺2h14m · 7d 38% · $1.84 · 👤 som…@example Max 5× · 🖥 ssh:server1 ~/app · ⎇ main* ↑3↓1',
+      'Opus 5.5 1M │ ctx 42% 420k/1M │ 5h 13% ↺2h14 │ 7d 38% │ som…@example Max 5× │ ssh:server1 ~/app │ ⎇ main* ↑3↓1',
     )
   })
 
-  test('marks high values and draws bars', () => {
+  test('colors by load and draws bars only when asked', () => {
     const hot = { ...base, context: { percent: 91, window: 1_000_000 }, limits: [{ kind: 'five_hour', percentUsed: 75 }] }
-    expect(formatLine(hot, { ...wide, bars: true, fields: ['ctx', '5h'] })).toBe('‼🧠 ▰▰▰▰▰ 91% · ⚠5h ▰▰▰▰▱ 75%')
+    const [row = []] = formatRows(hot, { ...wide, fields: ['ctx', '5h'] })
+    expect(row.filter(s => s.text.endsWith('%'))).toEqual([
+      { text: '91%', tone: 'bad' },
+      { text: '75%', tone: 'warn' },
+    ])
+    expect(formatLine(hot, { ...wide, bars: true, fields: ['ctx', '5h'] })).toBe('ctx ▰▰▰▰▰ 91% │ 5h ▰▰▰▰▱ 75%')
+    expect(loadTone(12)).toBe('ok')
+  })
+
+  test('no cost anywhere, mode and effort as one group', () => {
+    const snap = { ...base, mode: 'auto', effort: 'medium' }
+    expect(formatLine(snap, { ...wide, fields: ['mode', 'effort', 'git'] })).toBe('auto · medium │ ⎇ main* ↑3↓1')
+    expect(parseFields('cost,ctx')).toEqual(['ctx'])
   })
 
   test('narrow terminals keep only limits, host and git, without bars', () => {
     expect(formatLine(base, { ...wide, bars: true, columns: 80 })).toBe(
-      '🧠 42% 420k/1M · 5h 13% ↺2h14m · 7d 38% · 🖥 ssh:server1 ~/app · ⎇ main* ↑3↓1',
+      'ctx 42% 420k/1M │ 5h 13% ↺2h14 │ 7d 38% │ ssh:server1 ~/app │ ⎇ main* ↑3↓1',
     )
     expect(formatLine(base, { ...wide, twoLines: true, columns: 80 })).toBe(
-      '🧠 42% 420k/1M · 5h 13% ↺2h14m · 7d 38%\n🖥 ssh:server1 ~/app · ⎇ main* ↑3↓1',
+      'ctx 42% 420k/1M │ 5h 13% ↺2h14 │ 7d 38%\nssh:server1 ~/app │ ⎇ main* ↑3↓1',
     )
   })
 
   test('two lines: limits first, then where and who', () => {
-    expect(formatLine(base, { ...wide, twoLines: true })).toBe(
-      'Opus 5.5 1M · 🧠 42% 420k/1M · 5h 13% ↺2h14m · 7d 38% · $1.84\n👤 som…@example Max 5× · 🖥 ssh:server1 ~/app · ⎇ main* ↑3↓1',
+    const snap = { ...base, startedAt: NOW - 18 * MIN, turns: 8 }
+    expect(formatLine(snap, { ...wide, twoLines: true })).toBe(
+      'Opus 5.5 1M │ ctx 42% 420k/1M │ 5h 13% ↺2h14 │ 7d 38%\nsom…@example Max 5× │ ssh:server1 ~/app │ ⎇ main* ↑3↓1 │ 18m · 8 turns',
     )
   })
 
@@ -69,12 +83,13 @@ describe('formatLine', () => {
       { at: NOW - 5_000, pct: 11 },
       { at: NOW, pct: 12 },
     ]
-    expect(formatLine({ ...base, samples }, { ...wide, fields: ['5h'] })).toBe('5h 13% ↺2h14m')
+    expect(formatLine({ ...base, samples }, { ...wide, fields: ['5h'] })).toBe('5h 13% ↺2h14')
   })
 
-  test('a host profile replaces the name and alarms on PROD', () => {
+  test('a host profile replaces the name, PROD in red', () => {
     const prod = { ...base, profile: { emoji: '🔴', label: 'PROD' } }
-    expect(formatLine(prod, { ...wide, fields: ['host'] })).toBe('‼🔴 PROD ~/app')
+    expect(formatLine(prod, { ...wide, fields: ['host'] })).toBe('🔴 PROD ~/app')
+    expect(formatRows(prod, { ...wide, fields: ['host'] })[0]?.[0]?.tone).toBe('bad')
   })
 
   test('the burn-out forecast, and "enough" when the reset comes first', () => {
@@ -84,10 +99,10 @@ describe('formatLine', () => {
     ]
     // 1% a minute from 70% → empty in 30 min, before the reset in 134 min.
     const soon = { ...base, samples, limits: [{ kind: 'five_hour', percentUsed: 70, resetsAt: base.limits[0]?.resetsAt }] }
-    expect(formatLine(soon, { ...wide, fields: ['5h'] })).toMatch(/^⚠5h 70% ↺2h14m → leer ~\d\d:\d\d$/)
+    expect(formatLine(soon, { ...wide, fields: ['5h'] })).toMatch(/^5h 70% ↺2h14 → \d\d:\d\d$/)
 
     const slow = { ...soon, samples: [{ at: NOW - 20 * MIN, pct: 69 }, { at: NOW, pct: 70 }] }
-    expect(formatLine(slow, { ...wide, fields: ['5h'] })).toBe('⚠5h 70% ↺2h14m ✓')
+    expect(formatLine(slow, { ...wide, fields: ['5h'] })).toBe('5h 70% ↺2h14 ✓')
   })
 })
 
