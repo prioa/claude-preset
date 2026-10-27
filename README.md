@@ -39,15 +39,12 @@ Requirements: `git`, `jq`, `claude`.
 | `cc-plugin-you-should-know@builtin` | Side agent that shows important things above the prompt during longer tasks |
 | `pensive@claude-night-market` | Code review incl. the `blast-radius-reviewer` agent (pulls in `leyline` as a dependency) |
 | `security-guidance@claude-plugins-official` | Checks Claude's changes for injection, XSS, secrets and similar |
-| `grafana-mcp@claude-plugins-official` | Grafana MCP (self-hosted): dashboards, data sources, queries, alerting. Runs `grafana/mcp-grafana` in Docker |
 | `chrome-devtools-mcp@claude-plugins-official` | Live Chrome: performance traces, network, console (WP performance, React debugging) |
 | `php-lsp@claude-plugins-official` | PHP LSP (Intelephense) |
 | `typescript-lsp@claude-plugins-official` | TypeScript/JavaScript LSP |
 | `launch-codes@claude-code-mods` | Risky Bash commands (`rm -rf`, force push, `reset --hard`, SQL `DROP`, `curl \| sh` …) need a one-time code + LAUNCH; without input (e.g. `claude -p`) they are blocked. `/launch-codes test <cmd>` checks without running |
 
-External programs (install.sh only warns if they are missing): `docker` (grafana-mcp), `intelephense` (`npm i -g intelephense`), `typescript-language-server` (`npm i -g typescript-language-server typescript`), `pio` (`pipx install platformio`).
-
-**Grafana setup:** in Grafana create a service account (role Viewer, or Editor if Claude should change dashboards) and a token for it. Then set URL and token once per machine: `/plugin configure grafana-mcp@claude-plugins-official` in Claude Code (or `claude plugin install … --config KEY=VALUE`).
+External programs (install.sh only warns if they are missing): `intelephense` (`npm i -g intelephense`), `typescript-language-server` (`npm i -g typescript-language-server typescript`), `pio` (`pipx install platformio`).
 
 The night-market star prompt (SessionStart hook of `leyline`) is turned off via `env.CLAUDE_NIGHT_MARKET_NO_STAR_PROMPT` in `settings/base.json`.
 
