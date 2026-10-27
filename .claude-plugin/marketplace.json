@@ -12,7 +12,7 @@
     {
       "name": "agent-library",
       "source": "./mods/agent-library",
-      "description": "Spezialisten-Agenten (WordPress, WP-Performance, React/Vite, Grafana, ESP32), nur bei Bedarf geladen"
+      "description": "Spezialisten-Agenten (WordPress, WP-Performance, React/Vite, ESP32), nur bei Bedarf geladen"
     },
     {
       "name": "wp-skills",

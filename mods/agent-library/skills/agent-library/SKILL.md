@@ -1,6 +1,6 @@
 ---
 name: agent-library
-description: Specialist subagent definitions for WordPress development, WordPress performance, React/Vite apps, Grafana (self-hosted) and ESP32/Arduino/PlatformIO firmware. Load when a task in one of these areas is big enough to delegate (parallel subtasks, a broad audit, a long autonomous run), or to get the specialist's checklist for inline work.
+description: Specialist subagent definitions for WordPress development, WordPress performance, React/Vite apps and ESP32/Arduino/PlatformIO firmware. Load when a task in one of these areas is big enough to delegate (parallel subtasks, a broad audit, a long autonomous run), or to get the specialist's checklist for inline work.
 ---
 
 # Agent library
@@ -24,7 +24,6 @@ Otherwise work inline: read the matching definition and use its checklist yourse
 | `agents/wordpress-dev.md` | Themes, plugins, blocks, REST, WP-CLI, coding standards, security |
 | `agents/wp-performance.md` | Measured WordPress speed work: TTFB, queries, autoload, caching, assets, Core Web Vitals |
 | `agents/react-vite.md` | React apps on Vite: components, state, routing, build config, bundle size, Vitest |
-| `agents/grafana.md` | Self-hosted Grafana: dashboards, queries (PromQL/Flux/InfluxQL/SQL), alerting, provisioning |
 | `agents/esp32-firmware.md` | ESP32 with Arduino core or ESP-IDF via PlatformIO: firmware, OTA, power, connectivity |
 
 ## Spawning

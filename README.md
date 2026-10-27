@@ -73,7 +73,7 @@ Tests: `claude plugin test mods/infobar`
 
 ### agent-library
 
-Specialist agents for WordPress dev, WordPress performance, React/Vite, Grafana and ESP32/PlatformIO. They are **not** registered as subagents: only the skill description sits in the context. Claude loads the skill when a task in one of these areas comes up, decides whether delegating is worth it (parallel subtasks, an audit that would flood the context, a long autonomous run), and otherwise uses the definition as a checklist inline. To delegate, it reads `agents/<name>.md` and starts a `general-purpose` agent with it.
+Specialist agents for WordPress dev, WordPress performance, React/Vite and ESP32/PlatformIO. They are **not** registered as subagents: only the skill description sits in the context. Claude loads the skill when a task in one of these areas comes up, decides whether delegating is worth it (parallel subtasks, an audit that would flood the context, a long autonomous run), and otherwise uses the definition as a checklist inline. To delegate, it reads `agents/<name>.md` and starts a `general-purpose` agent with it.
 
 New agent: add `mods/agent-library/skills/agent-library/agents/<name>.md` and a row to the index in `SKILL.md`.
 
