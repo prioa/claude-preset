@@ -11,7 +11,7 @@ The definitions in `agents/` (next to this file) are **not** registered as subag
 
 Spawn a specialist only if at least one applies:
 
-1. **Parallel:** two or more independent subtasks (e.g. audit theme *and* plugin, firmware *and* dashboard).
+1. **Parallel:** two or more independent subtasks (e.g. audit theme *and* plugin, firmware *and* web app).
 2. **Context protection:** the exploration or audit would pull many files or long tool output into the main conversation, and only the conclusion matters.
 3. **Long autonomous run:** a measured optimization loop or migration that can work without check-ins.
 
